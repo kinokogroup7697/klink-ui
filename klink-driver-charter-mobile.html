@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>K-LINK ドライバー — 貸切</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  background: #f5f3ef;
+  color: #1a1a1a;
+  min-height: 100vh;
+  padding-bottom: 64px;
+  overflow-x: hidden;
+}
+
+.header {
+  background: #fff;
+  padding: 11px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e8e4de;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.header .logo { font-size: 13px; font-weight: 700; color: #333; letter-spacing: 1px; }
+.header .ref { font-size: 11px; color: #999; }
+
+/* Alert */
+.alert {
+  background: #fff5f0;
+  padding: 10px 20px;
+  font-size: 11px;
+  color: #c0392b;
+  line-height: 1.6;
+  border-bottom: 1px solid #f0e0d0;
+}
+
+/* Info */
+.info {
+  background: #fff;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e8e4de;
+}
+.info .row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #f8f6f2;
+  font-size: 13px;
+  line-height: 1;
+}
+.info .row:last-child { border-bottom: none; }
+.info .k { color: #999; font-size: 12px; min-width: 70px; }
+.info .val { color: #333; font-weight: 400; font-size: 13px; text-align: right; }
+.info .val.em { color: #333; font-weight: 600; }
+.info .badge { font-size: 11px; background: #e8f2ff; color: #2d6ab8; padding: 2px 8px; border-radius: 3px; font-weight: 500; }
+
+/* Day switch */
+.day-sw {
+  display: flex;
+  background: #fff;
+  border-bottom: 1px solid #e8e4de;
+  position: sticky;
+  top: 39px;
+  z-index: 9;
+}
+.day-sw .dt {
+  flex: 1;
+  text-align: center;
+  padding: 9px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #bbb;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.day-sw .dt.on { color: #333; border-color: #333; }
+.day-sw { position: sticky; top: 39px; z-index: 9; }
+
+/* Swipe */
+.sw-wrap { overflow: hidden; }
+.sw-track { display: flex; transition: transform 0.25s ease; width: 200%; }
+.sw-page { width: 50%; flex-shrink: 0; }
+
+/* Itinerary */
+.itin {
+  background: #fff;
+  padding: 10px 20px;
+}
+.itin .r {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f8f6f2;
+}
+.itin .r:last-child { border-bottom: none; }
+.itin .t { font-size: 13px; font-weight: 600; color: #333; min-width: 44px; }
+.itin .p { font-size: 13px; color: #444; font-weight: 400; }
+.itin .p .s { font-size: 11px; color: #aaa; margin-top: 2px; }
+
+/* Bottom fixed */
+.bottom {
+  background: #fff;
+  border-top: 1px solid #e8e4de;
+  padding: 10px 20px;
+}
+.bottom .emergency { font-size: 11px; color: #c0392b; font-weight: 500; margin-bottom: 4px; }
+.bottom .related { font-size: 11px; color: #888; }
+
+/* Expense + btn */
+.exp {
+  display: flex;
+  gap: 6px;
+  padding: 10px 20px;
+  background: #fff;
+  border-top: 1px solid #e8e4de;
+}
+.exp .ei { flex: 1; }
+.exp .ei span { display: block; font-size: 9px; color: #aaa; margin-bottom: 2px; }
+.exp .ei input {
+  width: 100%; padding: 7px; border: 1px solid #e8e4de; border-radius: 6px;
+  font-size: 13px; text-align: center; outline: none;
+}
+.exp .ei input:focus { border-color: #999; }
+
+.btn {
+  display: block; width: calc(100% - 40px); padding: 11px; margin: 10px 20px;
+  background: #333; color: #fff; border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 600; cursor: pointer; text-align: center;
+}
+
+/* Tab */
+.tab-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; background: #fff;
+  border-top: 1px solid #e8e4de; display: flex; height: 54px; z-index: 10;
+}
+.tab-bar .tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 9px; color: #bbb; cursor: pointer; }
+.tab-bar .tab.on { color: #333; }
+.tab-bar .tab .ico { font-size: 17px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="logo">K-LINK</span>
+  <span class="ref">KNO-A&K-0519-040</span>
+</div>
+
+<div class="day-sw">
+  <div class="dt on" onclick="sw(0)">DAY 1 · 5/19</div>
+  <div class="dt" onclick="sw(1)">DAY 2 · 5/20</div>
+</div>
+
+<div class="info">
+  <div class="row"><span class="k">注意事項</span><span class="val" style="color:#c0392b;font-size:11px;text-align:left;max-width:70%;">水・ティッシュ・ウェットティッシュ車内準備 / 人数3名（行程表の2名は誤り）</span></div>
+  <div class="row"><span class="k">プラン</span><span class="val">10h / 150km</span></div>
+  <div class="row"><span class="k">言語</span><span class="badge">英語</span></div>
+  <div class="row"><span class="k">予約番号</span><span class="val">KNO-A&K-0519-040</span></div>
+  <div class="row"><span class="k">ガイド</span><span class="val">Mr. Kenjo</span></div>
+  <div class="row"><span class="k">ガイドTEL</span><span class="val">080-3099-1502</span></div>
+  <div class="row"><span class="k">人数</span><span class="val">3名+ガイド1名</span></div>
+  <div class="row"><span class="k">荷物</span><span class="val">未定</span></div>
+</div>
+
+<div class="sw-wrap" id="swWrap">
+  <div class="sw-track" id="swTrack">
+    <div class="sw-page">
+      <div class="itin">
+        <div class="r"><span class="t">乗車指定時間</span><div class="p">09:00</div></div>
+        <div class="r"><span class="t">乗車地</span><div class="p">コンラッド東京</div></div>
+        <div class="r" style="flex-direction:column;gap:4px;"><span class="t">行程</span><div class="p">9:00 コンラッド東京 出発<br>09:30-11:30 皇居ツアー<br>11:30-16:30 当日決めます<br>17:00 コンラッド東京 帰着</div></div>
+        <div class="r"><span class="t">下車地</span><div class="p">コンラッド東京</div></div>
+      </div>
+    </div>
+    <div class="sw-page">
+      <div class="itin">
+        <div class="r"><span class="t">乗車指定時間</span><div class="p">09:00</div></div>
+        <div class="r"><span class="t">乗車地</span><div class="p">コンラッド東京</div></div>
+        <div class="r" style="flex-direction:column;gap:4px;"><span class="t">行程</span><div class="p">9:00 コンラッド東京 出発<br>09:30-11:30 皇居ツアー<br>11:30-16:30 当日決めます<br>17:00 コンラッド東京 帰着</div></div>
+        <div class="r"><span class="t">下車地</span><div class="p">コンラッド東京</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="exp">
+  <div class="ei"><span>高速代</span><input type="number" value="0"></div>
+  <div class="ei"><span>駐車場代</span><input type="number" value="0"></div>
+  <div class="ei"><span>立替</span><input type="number" value="0"></div>
+</div>
+
+<button class="btn">変更</button>
+
+<div class="bottom">
+  <div class="emergency">緊急：Kinoko 劉さん 080-9807-1230</div>
+  <div class="related">単発予約 / その他なし</div>
+</div>
+
+<div class="tab-bar">
+  <div class="tab"><span class="ico">⏱</span><span>打刻</span></div>
+  <div class="tab on"><span class="ico">📋</span><span>日程</span></div>
+  <div class="tab"><span class="ico">👤</span><span>個人</span></div>
+</div>
+
+<script>
+let cur=0;
+const track=document.getElementById('swTrack');
+const tabs=document.querySelectorAll('.dt');
+function sw(i){cur=i;track.style.transform=`translateX(-${i*50}%)`;tabs.forEach((t,j)=>t.className=j===i?'dt on':'dt');}
+const wrap=document.getElementById('swWrap');
+let sx=0;
+wrap.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;});
+wrap.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-sx;if(d<-40&&cur<1)sw(1);if(d>40&&cur>0)sw(0);});
+</script>
+
+</body>
+</html>
