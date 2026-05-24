@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-LINK 配車タイムライン — 木の子交通</title>
+<style>
+:root {
+  --bg-body: #FDFBF7;
+  --bg-sidebar: #1a1a2e;
+  --bg-sidebar-hover: #25254a;
+  --bg-header: #ffffff;
+  --accent-gold: #b8945a;
+  --accent-gold-light: #d4ad6a;
+  --accent-gold-bg: rgba(184, 148, 90, 0.08);
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b6b7b;
+  --text-muted: #9a9aab;
+  --text-sidebar: #8a8aac;
+  --text-sidebar-active: #ffffff;
+  --border-subtle: #ebe7e0;
+  --border-timeline: #f0ece6;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-block: 0 2px 8px rgba(0,0,0,0.05);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  /* Block colors */
+  --block-confirmed-bg: #E8F5F0;
+  --block-confirmed-border: #2d8a6e;
+  --block-confirmed-text: #1a6b54;
+  --block-progress-bg: #FFF8E8;
+  --block-progress-border: #b8945a;
+  --block-progress-text: #7a5c2e;
+  --block-provisional-bg: #F3EEFF;
+  --block-provisional-border: #7c5cbf;
+  --block-provisional-text: #5a3d99;
+  /* Timeline */
+  --timeline-hour-width: 80px;
+  --driver-col-width: 180px;
+  --header-height: 56px;
+  --sidebar-width: 60px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  background: var(--bg-body);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* ===== Layout ===== */
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  grid-template-rows: var(--header-height) 1fr auto;
+  grid-template-areas:
+    "sidebar header"
+    "sidebar main"
+    "sidebar footer";
+  height: 100vh;
+}
+
+/* ===== Sidebar ===== */
+.sidebar {
+  grid-area: sidebar;
+  background: var(--bg-sidebar);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0;
+  gap: 4px;
+  z-index: 100;
+}
+
+.sidebar-logo {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--accent-gold), #9a7540);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.5px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.nav-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  font-size: 18px;
+  color: var(--text-sidebar);
+  text-decoration: none;
+}
+
+.nav-icon-btn:hover {
+  background: var(--bg-sidebar-hover);
+  color: #ccc;
+}
+
+.nav-icon-btn.active {
+  background: rgba(184, 148, 90, 0.15);
+  color: var(--accent-gold-light);
+}
+
+.nav-icon-btn.active::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  background: var(--accent-gold);
+  border-radius: 0 2px 2px 0;
+}
+
+.nav-icon-btn .tooltip {
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: #2a2a4a;
+  color: #fff;
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.nav-icon-btn:hover .tooltip {
+  opacity: 1;
+}
+
+.sidebar-bottom {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ===== Header ===== */
+.header {
+  grid-area: header;
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  box-shadow: var(--shadow-sm);
+  z-index: 50;
+}
+
+.header-date {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-date .date-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.header-date .nav-arrow {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  background: none;
+}
+
+.header-date .nav-arrow:hover {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+  background: var(--accent-gold-bg);
+}
+
+.header-center {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 32px;
+  background: #f5f3ee;
+  border-radius: var(--radius-sm);
+  padding: 3px;
+}
+
+.view-toggle {
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  background: none;
+}
+
+.view-toggle.active {
+  background: #ffffff;
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+.view-toggle:hover:not(.active) {
+  color: var(--text-primary);
+}
+
+.header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-today {
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: #fff;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-today:hover {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+.btn-new {
+  padding: 7px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent-gold), #9a7540);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(184, 148, 90, 0.3);
+}
+
+.btn-new:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(184, 148, 90, 0.4);
+}
+
+.btn-provisional {
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--block-provisional-text);
+  background: var(--block-provisional-bg);
+  border: 1px solid rgba(124, 92, 191, 0.2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-provisional:hover {
+  background: rgba(124, 92, 191, 0.12);
+}
+
+.header-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  font-size: 16px;
+  border: none;
+  background: none;
+  position: relative;
+}
+
+.header-icon-btn:hover {
+  background: #f5f3ee;
+  color: var(--text-primary);
+}
+
+.header-icon-btn .badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  background: #e74c3c;
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+
+.user-avatar-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e8dcc8, #d4c4a8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-gold);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+
+.user-avatar-small:hover {
+  border-color: var(--accent-gold);
+}
+
+/* ===== Main Timeline ===== */
+.main-area {
+  grid-area: main;
+  overflow: auto;
+  position: relative;
+}
+
+.timeline-container {
+  display: grid;
+  grid-template-columns: var(--driver-col-width) 1fr;
+  grid-template-rows: 44px 1fr;
+  height: 100%;
+  min-width: fit-content;
+}
+
+/* Time axis header */
+.time-axis {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--border-timeline);
+  background: var(--bg-body);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding-bottom: 8px;
+}
+
+.time-slot-label {
+  width: var(--timeline-hour-width);
+  min-width: var(--timeline-hour-width);
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  padding-left: 4px;
+  position: relative;
+}
+
+.time-slot-label::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -9px;
+  width: 1px;
+  height: 6px;
+  background: var(--border-timeline);
+}
+
+/* Driver column header spacer */
+.driver-col-header {
+  grid-column: 1;
+  grid-row: 1;
+  background: var(--bg-body);
+  border-bottom: 1px solid var(--border-timeline);
+  border-right: 1px solid var(--border-timeline);
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* Driver list */
+.driver-list {
+  grid-column: 1;
+  grid-row: 2;
+  border-right: 1px solid var(--border-timeline);
+  background: var(--bg-body);
+  position: sticky;
+  left: 0;
+  z-index: 10;
+}
+
+.driver-row-label {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border-timeline);
+  transition: background 0.15s;
+}
+
+.driver-row-label:hover {
+  background: rgba(184, 148, 90, 0.03);
+}
+
+.driver-row-label.off-day {
+  opacity: 0.5;
+}
+
+.driver-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e8e2d8, #ddd6c8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-gold);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.driver-avatar .status-dot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-body);
+}
+
+.status-dot.online { background: #34c759; }
+.status-dot.offline { background: #aaa; }
+
+.driver-info-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.driver-info-label .name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.driver-info-label .vehicle-tag {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Timeline grid */
+.timeline-grid {
+  grid-column: 2;
+  grid-row: 2;
+  position: relative;
+}
+
+.timeline-row {
+  height: 72px;
+  position: relative;
+  border-bottom: 1px solid var(--border-timeline);
+}
+
+.timeline-row.off-day {
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 8px,
+    rgba(0,0,0,0.015) 8px,
+    rgba(0,0,0,0.015) 16px
+  );
+}
+
+/* Grid lines */
+.grid-lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.grid-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-timeline);
+}
+
+/* Current time indicator */
+.current-time-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #e85d5d;
+  z-index: 15;
+  pointer-events: none;
+}
+
+.current-time-line::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  width: 10px;
+  height: 10px;
+  background: #e85d5d;
+  border-radius: 50%;
+}
+
+/* Booking blocks */
+.booking-block {
+  position: absolute;
+  top: 10px;
+  height: calc(100% - 20px);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  border-left: 3px solid;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 5;
+  overflow: hidden;
+  box-shadow: var(--shadow-block);
+}
+
+.booking-block:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  z-index: 10;
+}
+
+.booking-block.confirmed {
+  background: var(--block-confirmed-bg);
+  border-left-color: var(--block-confirmed-border);
+}
+
+.booking-block.in-progress {
+  background: var(--block-progress-bg);
+  border-left-color: var(--block-progress-border);
+}
+
+.booking-block.provisional {
+  background: var(--block-provisional-bg);
+  border-left-color: var(--block-provisional-border);
+}
+
+.booking-block .block-time {
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.booking-block.confirmed .block-time { color: var(--block-confirmed-text); }
+.booking-block.in-progress .block-time { color: var(--block-progress-text); }
+.booking-block.provisional .block-time { color: var(--block-provisional-text); }
+
+.booking-block .block-route {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.booking-block.confirmed .block-route { color: var(--block-confirmed-text); }
+.booking-block.in-progress .block-route { color: var(--block-progress-text); }
+.booking-block.provisional .block-route { color: var(--block-provisional-text); }
+
+.booking-block .block-vehicle {
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+.booking-block.confirmed .block-vehicle { color: var(--block-confirmed-text); }
+.booking-block.in-progress .block-vehicle { color: var(--block-progress-text); }
+.booking-block.provisional .block-vehicle { color: var(--block-provisional-text); }
+
+/* Off day label */
+.off-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 1px;
+  z-index: 5;
+}
+
+/* ===== Footer Status Bar ===== */
+.footer-bar {
+  grid-area: footer;
+  background: var(--bg-header);
+  border-top: 1px solid var(--border-subtle);
+  padding: 8px 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.footer-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.footer-stat .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.footer-stat .dot.green { background: #34c759; }
+.footer-stat .dot.gold { background: var(--accent-gold); }
+.footer-stat .dot.red { background: #e85d5d; }
+
+.footer-legend {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border-left: 3px solid;
+}
+
+.legend-swatch.confirmed {
+  background: var(--block-confirmed-bg);
+  border-left-color: var(--block-confirmed-border);
+}
+
+.legend-swatch.in-progress {
+  background: var(--block-progress-bg);
+  border-left-color: var(--block-progress-border);
+}
+
+.legend-swatch.provisional {
+  background: var(--block-provisional-bg);
+  border-left-color: var(--block-provisional-border);
+}
+
+/* ===== Scrollbar ===== */
+.main-area::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.main-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+.main-area::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.1);
+  border-radius: 4px;
+}
+.main-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.18);
+}
+
+/* ===== Animations ===== */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.current-time-line::before {
+  animation: pulse 2s ease-in-out infinite;
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">K</div>
+    <nav class="sidebar-nav">
+      <a class="nav-icon-btn active">
+        📊
+        <span class="tooltip">タイムライン</span>
+      </a>
+      <a class="nav-icon-btn">
+        📋
+        <span class="tooltip">予約一覧</span>
+      </a>
+      <a class="nav-icon-btn">
+        🚗
+        <span class="tooltip">車両管理</span>
+      </a>
+      <a class="nav-icon-btn">
+        👤
+        <span class="tooltip">ドライバー</span>
+      </a>
+      <a class="nav-icon-btn">
+        📧
+        <span class="tooltip">メール</span>
+      </a>
+    </nav>
+    <div class="sidebar-bottom">
+      <a class="nav-icon-btn">
+        ⚙️
+        <span class="tooltip">設定</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ===== Header ===== -->
+  <header class="header">
+    <div class="header-date">
+      <button class="nav-arrow">◀</button>
+      <span class="date-text">2026年5月19日（月）</span>
+      <button class="nav-arrow">▶</button>
+    </div>
+
+    <div class="header-center">
+      <button class="view-toggle active">日</button>
+      <button class="view-toggle">週</button>
+      <button class="view-toggle">月</button>
+    </div>
+
+    <div class="header-right">
+      <button class="btn-today">今日</button>
+      <button class="btn-new">＋ 新規予約</button>
+      <button class="btn-provisional">仮予約</button>
+      <button class="header-icon-btn">🔍</button>
+      <button class="header-icon-btn">
+        🔔
+        <span class="badge"></span>
+      </button>
+      <div class="user-avatar-small">管</div>
+    </div>
+  </header>
+
+  <!-- ===== Main Timeline Area ===== -->
+  <div class="main-area">
+    <div class="timeline-container">
+
+      <!-- Driver column header -->
+      <div class="driver-col-header">ドライバー</div>
+
+      <!-- Time axis -->
+      <div class="time-axis">
+        <div class="time-slot-label">6:00</div>
+        <div class="time-slot-label">7:00</div>
+        <div class="time-slot-label">8:00</div>
+        <div class="time-slot-label">9:00</div>
+        <div class="time-slot-label">10:00</div>
+        <div class="time-slot-label">11:00</div>
+        <div class="time-slot-label">12:00</div>
+        <div class="time-slot-label">13:00</div>
+        <div class="time-slot-label">14:00</div>
+        <div class="time-slot-label">15:00</div>
+        <div class="time-slot-label">16:00</div>
+        <div class="time-slot-label">17:00</div>
+        <div class="time-slot-label">18:00</div>
+        <div class="time-slot-label">19:00</div>
+        <div class="time-slot-label">20:00</div>
+        <div class="time-slot-label">21:00</div>
+        <div class="time-slot-label">22:00</div>
+      </div>
+
+      <!-- Driver list -->
+      <div class="driver-list">
+        <div class="driver-row-label">
+          <div class="driver-avatar">
+            西
+            <span class="status-dot online"></span>
+          </div>
+          <div class="driver-info-label">
+            <span class="name">西山 大輝</span>
+            <span class="vehicle-tag">ALPHARD</span>
+          </div>
+        </div>
+        <div class="driver-row-label">
+          <div class="driver-avatar">
+            松
+            <span class="status-dot online"></span>
+          </div>
+          <div class="driver-info-label">
+            <span class="name">松原 慶介</span>
+            <span class="vehicle-tag">GRANACE</span>
+          </div>
+        </div>
+        <div class="driver-row-label">
+          <div class="driver-avatar">
+            藤
+            <span class="status-dot online"></span>
+          </div>
+          <div class="driver-info-label">
+            <span class="name">藤野 浩幹</span>
+            <span class="vehicle-tag">BENZ V</span>
+          </div>
+        </div>
+        <div class="driver-row-label">
+          <div class="driver-avatar">
+            山
+            <span class="status-dot online"></span>
+          </div>
+          <div class="driver-info-label">
+            <span class="name">山本 真敬</span>
+            <span class="vehicle-tag">BENZ V LUXURY</span>
+          </div>
+        </div>
+        <div class="driver-row-label off-day">
+          <div class="driver-avatar" style="background: linear-gradient(135deg, #e0e0e0, #d0d0d0); color: #999;">
+            和
+            <span class="status-dot offline"></span>
+          </div>
+          <div class="driver-info-label">
+            <span class="name">和田 佳治</span>
+            <span class="vehicle-tag">休み</span>
+          </div>
+        </div>
+        <div class="driver-row-label">
+          <div class="driver-avatar">
+            楠
+            <span class="status-dot online"></span>
+          </div>
+          <div class="driver-info-label">
+            <span class="name">楠田 恭子</span>
+            <span class="vehicle-tag">ALPHARD</span>
+          </div>
+        </div>
+        <div class="driver-row-label">
+          <div class="driver-avatar">
+            田
+            <span class="status-dot online"></span>
+          </div>
+          <div class="driver-info-label">
+            <span class="name">田中 裕太</span>
+            <span class="vehicle-tag">HIACE</span>
+          </div>
+        </div>
+        <div class="driver-row-label">
+          <div class="driver-avatar">
+            佐
+            <span class="status-dot online"></span>
+          </div>
+          <div class="driver-info-label">
+            <span class="name">佐藤 一郎</span>
+            <span class="vehicle-tag">GRANACE</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline Grid -->
+      <div class="timeline-grid">
+        <!-- Grid lines (per hour from 6:00 to 22:00 = 17 lines) -->
+        <div class="grid-lines">
+          <div class="grid-line" style="left: calc(0 * var(--timeline-hour-width))"></div>
+          <div class="grid-line" style="left: calc(1 * var(--timeline-hour-width))"></div>
+          <div class="grid-line" style="left: calc(2 * var(--timeline-hour-width))"></div>
+          <div class="grid-line" style="left: calc(3 * var(--timeline-hour-width))"></div>
+          <div class="grid-line" style="left: calc(4 * var(--timeline-hour-width))"></div>
+          <div class="grid-line" style="left: calc(5 * var(--timeline-hour-width))"></div>
+          <div class="grid-line" style="left: calc(6 * var(--timeline-hour-width))"></div>
+          <div class="grid-line" style="left: calc(7 * var(--timeline-hour-width))"></div>
+          <div class="grid-line" style="left: calc(8 * var(--timeline-hour-width))"></div>
+          <div class="grid-line" style="left: calc(9 * var(--timeline-hour-width))"></div>
+          <div class="grid-line" style="left: calc(10 * var(--timeline-hour-width))"></div>
+          <div class="grid-line" style="left: calc(11 * var(--timeline-hour-width))"></div>
+          <div class="grid-line" style="left: calc(12 * var(--timeline-hour-width))"></div>
+          <div class="grid-line" style="left: calc(13 * var(--timeline-hour-width))"></div>
+          <div class="grid-line" style="left: calc(14 * var(--timeline-hour-width))"></div>
+          <div class="grid-line" style="left: calc(15 * var(--timeline-hour-width))"></div>
+          <div class="grid-line" style="left: calc(16 * var(--timeline-hour-width))"></div>
+        </div>
+
+        <!-- Current time line at 15:00 (9 hours from 6:00 start) -->
+        <div class="current-time-line" style="left: calc(9 * var(--timeline-hour-width))"></div>
+
+        <!-- Row 1: 西山 — 7:00-12:00 confirmed + 14:00-17:00 gold -->
+        <div class="timeline-row">
+          <!-- 7:00-12:00 = starts at hour 1, spans 5 hours -->
+          <div class="booking-block confirmed" style="left: calc(1 * var(--timeline-hour-width)); width: calc(5 * var(--timeline-hour-width));">
+            <span class="block-time">07:00 – 12:00</span>
+            <span class="block-route">羽田空港 → 六本木ヒルズ</span>
+            <span class="block-vehicle">🚗 ALPHARD</span>
+          </div>
+          <!-- 14:00-17:00 = starts at hour 8, spans 3 hours -->
+          <div class="booking-block in-progress" style="left: calc(8 * var(--timeline-hour-width)); width: calc(3 * var(--timeline-hour-width));">
+            <span class="block-time">14:00 – 17:00</span>
+            <span class="block-route">都内観光</span>
+            <span class="block-vehicle">🚗 ALPHARD</span>
+          </div>
+        </div>
+
+        <!-- Row 2: 松原 — 9:00-15:00 confirmed -->
+        <div class="timeline-row">
+          <!-- 9:00-15:00 = starts at hour 3, spans 6 hours -->
+          <div class="booking-block confirmed" style="left: calc(3 * var(--timeline-hour-width)); width: calc(6 * var(--timeline-hour-width));">
+            <span class="block-time">09:00 – 15:00</span>
+            <span class="block-route">成田空港 → 箱根</span>
+            <span class="block-vehicle">🚗 GRANACE</span>
+          </div>
+        </div>
+
+        <!-- Row 3: 藤野 — 8:00-11:00 provisional + 13:00-18:00 confirmed -->
+        <div class="timeline-row">
+          <!-- 8:00-11:00 = starts at hour 2, spans 3 hours -->
+          <div class="booking-block provisional" style="left: calc(2 * var(--timeline-hour-width)); width: calc(3 * var(--timeline-hour-width));">
+            <span class="block-time">08:00 – 11:00</span>
+            <span class="block-route">品川 → 東京駅</span>
+            <span class="block-vehicle">🚗 BENZ V</span>
+          </div>
+          <!-- 13:00-18:00 = starts at hour 7, spans 5 hours -->
+          <div class="booking-block confirmed" style="left: calc(7 * var(--timeline-hour-width)); width: calc(5 * var(--timeline-hour-width));">
+            <span class="block-time">13:00 – 18:00</span>
+            <span class="block-route">都内観光 → 羽田空港</span>
+            <span class="block-vehicle">🚗 BENZ V</span>
+          </div>
+        </div>
+
+        <!-- Row 4: 山本 — 6:30-10:00 confirmed + 15:00-20:00 in-progress -->
+        <div class="timeline-row">
+          <!-- 6:30-10:00 = starts at 0.5h, spans 3.5 hours -->
+          <div class="booking-block confirmed" style="left: calc(0.5 * var(--timeline-hour-width)); width: calc(3.5 * var(--timeline-hour-width));">
+            <span class="block-time">06:30 – 10:00</span>
+            <span class="block-route">ホテル → 成田空港</span>
+            <span class="block-vehicle">🚗 BENZ V LUXURY</span>
+          </div>
+          <!-- 15:00-20:00 = starts at hour 9, spans 5 hours -->
+          <div class="booking-block in-progress" style="left: calc(9 * var(--timeline-hour-width)); width: calc(5 * var(--timeline-hour-width));">
+            <span class="block-time">15:00 – 20:00</span>
+            <span class="block-route">VIPツアー</span>
+            <span class="block-vehicle">🚗 BENZ V LUXURY</span>
+          </div>
+        </div>
+
+        <!-- Row 5: 和田 — Off day -->
+        <div class="timeline-row off-day">
+          <span class="off-label">休 み</span>
+        </div>
+
+        <!-- Row 6: 楠田 — 10:00-16:00 confirmed -->
+        <div class="timeline-row">
+          <!-- 10:00-16:00 = starts at hour 4, spans 6 hours -->
+          <div class="booking-block confirmed" style="left: calc(4 * var(--timeline-hour-width)); width: calc(6 * var(--timeline-hour-width));">
+            <span class="block-time">10:00 – 16:00</span>
+            <span class="block-route">京都日帰り送迎</span>
+            <span class="block-vehicle">🚗 ALPHARD</span>
+          </div>
+        </div>
+
+        <!-- Row 7: 田中 — 11:00-14:00 confirmed -->
+        <div class="timeline-row">
+          <div class="booking-block confirmed" style="left: calc(5 * var(--timeline-hour-width)); width: calc(3 * var(--timeline-hour-width));">
+            <span class="block-time">11:00 – 14:00</span>
+            <span class="block-route">東京駅 → 横浜中華街</span>
+            <span class="block-vehicle">🚗 HIACE</span>
+          </div>
+        </div>
+
+        <!-- Row 8: 佐藤 — 7:30-11:30 confirmed + 16:00-19:00 provisional -->
+        <div class="timeline-row">
+          <div class="booking-block confirmed" style="left: calc(1.5 * var(--timeline-hour-width)); width: calc(4 * var(--timeline-hour-width));">
+            <span class="block-time">07:30 – 11:30</span>
+            <span class="block-route">羽田空港 → 鎌倉</span>
+            <span class="block-vehicle">🚗 GRANACE</span>
+          </div>
+          <div class="booking-block provisional" style="left: calc(10 * var(--timeline-hour-width)); width: calc(3 * var(--timeline-hour-width));">
+            <span class="block-time">16:00 – 19:00</span>
+            <span class="block-route">鎌倉 → 都内ホテル</span>
+            <span class="block-vehicle">🚗 GRANACE</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Footer Bar ===== -->
+  <div class="footer-bar">
+    <div class="footer-stat">
+      <span class="dot green"></span>
+      本日の稼働: 7/8名
+    </div>
+    <div class="footer-stat">
+      <span class="dot gold"></span>
+      予約数: 12件
+    </div>
+    <div class="footer-stat">
+      <span class="dot red"></span>
+      未確認: 2件
+    </div>
+
+    <div class="footer-legend">
+      <div class="legend-item">
+        <span class="legend-swatch confirmed"></span>
+        確定
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch in-progress"></span>
+        運行中
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch provisional"></span>
+        仮予約
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// View toggle interaction
+document.querySelectorAll('.view-toggle').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.view-toggle').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// Nav icon interaction
+document.querySelectorAll('.nav-icon-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.nav-icon-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>

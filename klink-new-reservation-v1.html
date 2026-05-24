@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新規予約 — K-LINK</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+  background: #f8f6f2;
+  color: #1a1a1a;
+  min-height: 100vh;
+}
+
+/* Top Bar */
+.topbar {
+  background: #fff;
+  border-bottom: 1px solid #e8e4de;
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.topbar .logo {
+  font-size: 15px;
+  font-weight: 700;
+  color: #b8945a;
+  letter-spacing: 1px;
+}
+.topbar .nav-links {
+  margin-left: auto;
+  display: flex;
+  gap: 20px;
+}
+.topbar .nav-links a {
+  font-size: 13px;
+  color: #666;
+  text-decoration: none;
+}
+.topbar .nav-links a:hover { color: #b8945a; }
+
+/* Main Split */
+.main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Panels */
+.panel {
+  overflow-y: auto;
+  padding: 24px 32px;
+}
+.panel-left {
+  background: #fff;
+  border-right: 1px solid #e8e4de;
+}
+.panel-right {
+  background: #faf8f5;
+}
+
+.panel-title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid;
+}
+.panel-left .panel-title {
+  color: #b8945a;
+  border-color: #b8945a;
+}
+.panel-right .panel-title {
+  color: #555;
+  border-color: #ccc;
+}
+
+/* Form Styles */
+.form-group {
+  margin-bottom: 14px;
+}
+.form-group > label {
+  display: block;
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 3px;
+  font-weight: 500;
+}
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e0dbd4;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #fff;
+  color: #1a1a1a;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #b8945a;
+}
+.form-group textarea {
+  resize: vertical;
+  min-height: 50px;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.radio-group {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+.radio-group label {
+  font-size: 12px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+.radio-group input[type="radio"] {
+  width: auto;
+  margin: 0;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e8e4de;
+}
+.btn {
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+.btn-primary {
+  background: #b8945a;
+  color: #fff;
+}
+.btn-primary:hover { background: #a07d48; }
+.btn-outline {
+  background: transparent;
+  color: #666;
+  border: 1px solid #ddd;
+}
+.btn-outline:hover {
+  border-color: #b8945a;
+  color: #b8945a;
+}
+
+/* 精算 Section */
+.seisan-section {
+  padding: 24px 32px;
+  background: #fff;
+  border-top: 1px solid #e8e4de;
+}
+.seisan-section .section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 20px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #b8945a;
+}
+.seisan-sub-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 10px;
+}
+.seisan-block {
+  margin-bottom: 24px;
+}
+.seisan-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.seisan-table th {
+  background: #faf8f5;
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 500;
+  color: #888;
+  border: 1px solid #e8e4de;
+  white-space: nowrap;
+}
+.seisan-table td {
+  padding: 10px 10px;
+  border: 1px solid #e8e4de;
+  color: #1a1a1a;
+}
+.seisan-table td.number {
+  text-align: right;
+  font-family: 'SF Mono', 'Menlo', monospace;
+}
+.seisan-table .total {
+  font-weight: 600;
+  color: #b8945a;
+}
+.seisan-table td.editable {
+  background: #fffdf8;
+  border: 1px dashed #e0dbd4;
+  cursor: text;
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">K-LINK</div>
+  <div class="nav-links">
+    <a href="#">配車画面</a>
+    <a href="#">予約一覧</a>
+    <a href="#">設定</a>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- LEFT: 情報画面（ドライバー共有） -->
+  <div class="panel panel-left">
+    <div class="panel-title">情報画面（ドライバー共有）</div>
+
+    <div class="form-group">
+      <label>注意事項</label>
+      <textarea></textarea>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>お客様名前</label>
+        <input type="text" value="Mr Jose Lopez">
+      </div>
+      <div class="form-group">
+        <label>お客様連絡先</label>
+        <input type="text" value="">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>人数（ガイド含め）</label>
+        <input type="number" value="4">
+      </div>
+      <div class="form-group">
+        <label>荷物</label>
+        <input type="text" value="スーツケース8個">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>乗車指定時間</label>
+      <input type="text" value="06:30">
+    </div>
+
+    <div class="form-group">
+      <label>乗車地</label>
+      <input type="text" value="成田国際空港">
+    </div>
+
+    <div class="form-group">
+      <label>下車地</label>
+      <input type="text" value="The Okura Tokyo 〒105-0001 東京都港区虎ノ門２丁目１０−４">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>便名</label>
+        <input type="text" value="AM 58">
+      </div>
+      <div class="form-group">
+        <label>便の時間</label>
+        <input type="text" value="06:30着">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>ミートボードアップロード</label>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div class="radio-group" style="padding-top:0;">
+          <label><input type="radio" name="meet" checked> あり</label>
+          <label><input type="radio" name="meet"> なし</label>
+        </div>
+        <label style="font-size:12px;color:#b8945a;cursor:pointer;border:1px dashed #b8945a;padding:4px 12px;border-radius:4px;">📎 ファイルを選択<input type="file" style="display:none;" accept="image/*,.pdf"></label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>言語指定</label>
+      <select>
+        <option>なし</option>
+        <option>英語</option>
+        <option>中国語</option>
+        <option>フランス語</option>
+        <option>その他</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>メモ</label>
+      <textarea>フライトAM 58で06:30到着。</textarea>
+    </div>
+
+    <div class="form-group">
+      <label>プラン内容</label>
+      <select>
+        <option>空港送迎</option>
+        <option>その他送迎</option>
+        <option>貸切観光</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>緊急連絡先</label>
+      <input type="text" value="ジップトリップ細川様 090-8790-0822">
+    </div>
+
+    <div class="form-group">
+      <label>関連送迎</label>
+      <input type="text" value="5/19 空港送迎, 6/2 空港送迎">
+    </div>
+
+    <div class="form-group">
+      <label>ファイル</label>
+      <div style="border:2px dashed #e0dbd4;border-radius:8px;padding:20px;text-align:center;color:#999;font-size:12px;cursor:pointer;">
+        📁 ファイルをドラッグ＆ドロップ、またはクリックしてアップロード<br>
+        <span style="font-size:11px;color:#bbb;">png / jpg / pdf / xlsx / docx（最大5MB×10件）</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: 管理画面（社内用） -->
+  <div class="panel panel-right">
+    <div class="panel-title">管理画面（社内用）</div>
+
+    <div class="form-group">
+      <label>Agent予約番号</label>
+      <input type="text" value="A589-266-8111">
+    </div>
+
+    <div class="form-group">
+      <label>プラン</label>
+      <select>
+        <option>空港送迎</option>
+        <option>その他送迎</option>
+        <option>貸切観光</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>送迎 or 貸切</label>
+      <div class="radio-group">
+        <label><input type="radio" name="type" checked> 送迎</label>
+        <label><input type="radio" name="type"> 貸切</label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>車種</label>
+      <select>
+        <option>OMAKASE</option>
+        <option>ALPHARD</option>
+        <option>GRANACE</option>
+        <option>BENZ V LUXURY</option>
+        <option>HIACE</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>ミート有無</label>
+      <div class="radio-group">
+        <label><input type="radio" name="meet2" checked> あり</label>
+        <label><input type="radio" name="meet2"> なし</label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>言語</label>
+      <select>
+        <option>なし</option>
+        <option>英語</option>
+        <option>中国語</option>
+        <option>フランス語</option>
+        <option>その他</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>時間軸注意事項</label>
+      <textarea></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>支払い方法</label>
+      <div class="radio-group">
+        <label><input type="radio" name="payment"> 当日支払い</label>
+        <label><input type="radio" name="payment"> 事前クレジットカード払い</label>
+        <label><input type="radio" name="payment"> 銀行振込</label>
+        <label><input type="radio" name="payment"> 月締め請求書</label>
+        <label><input type="radio" name="payment"> 月締めクレジット払い</label>
+        <label><input type="radio" name="payment"> クーポン</label>
+        <label><input type="radio" name="payment"> その他</label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>支払状況</label>
+      <div class="radio-group">
+        <label><input type="radio" name="status"> 未払い</label>
+        <label><input type="radio" name="status"> 請求書発行済</label>
+        <label><input type="radio" name="status"> 入金済</label>
+        <label><input type="radio" name="status"> 月締め</label>
+        <label><input type="radio" name="status"> 要確認</label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>自社・他社</label>
+      <div class="radio-group">
+        <label><input type="radio" name="company" checked> 自社</label>
+        <label><input type="radio" name="company"> 他社</label>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>ドライバー</label>
+        <select>
+          <option>選択してください</option>
+          <option>西山 大輝</option>
+          <option>松原 慶介</option>
+          <option>藤野 浩幹</option>
+          <option>山本 真敬</option>
+          <option>和田 佳治</option>
+          <option>楠田 恭子</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>車両</label>
+        <select>
+          <option>選択してください</option>
+          <option>グランエース　品川331け 7697</option>
+          <option>アルファード　品川330そ 8899</option>
+          <option>BENZ V　品川330そ 1234</option>
+          <option>HIACE　品川100そ 5678</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>内部備考欄</label>
+      <textarea style="min-height:120px;"></textarea>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- 精算 Section -->
+<div class="seisan-section">
+  <div class="section-title">精算</div>
+
+  <!-- 会社精算 -->
+  <div class="seisan-block">
+    <div class="seisan-sub-title">会社精算</div>
+    <table class="seisan-table">
+      <thead>
+        <tr>
+          <th>利用日</th>
+          <th>予約状態</th>
+          <th>配車時間</th>
+          <th>エージェント</th>
+          <th>乗車地</th>
+          <th>下車地</th>
+          <th>フライト</th>
+          <th>予約番号</th>
+          <th>プラン</th>
+          <th>車種指定料</th>
+          <th>料金</th>
+          <th>延長数量</th>
+          <th>延長料金</th>
+          <th>ミート料</th>
+          <th>オプション</th>
+          <th>言語指定</th>
+          <th>請求料金</th>
+          <th>立替料金</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>2026-05-19</td>
+          <td>終わり</td>
+          <td>06:30</td>
+          <td>ジップトリップ</td>
+          <td>成田国際空港</td>
+          <td>The Okura Tokyo</td>
+          <td>AM 58</td>
+          <td>A589-266-8111</td>
+          <td>空港送迎</td>
+          <td class="number editable">0</td>
+          <td class="number editable">65,000</td>
+          <td class="number editable">0</td>
+          <td class="number editable">0</td>
+          <td class="number editable">0</td>
+          <td class="number editable">0</td>
+          <td class="number editable">0</td>
+          <td class="number total">65,000</td>
+          <td class="number editable">0</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ドライバー精算 -->
+  <div class="seisan-block">
+    <div class="seisan-sub-title">ドライバー精算</div>
+    <table class="seisan-table">
+      <thead>
+        <tr>
+          <th>利用日</th>
+          <th>予約状態</th>
+          <th>配車時間</th>
+          <th>エージェント</th>
+          <th>プラン</th>
+          <th>料金</th>
+          <th>延長数量</th>
+          <th>延長料金</th>
+          <th>ミート料</th>
+          <th>税込売上</th>
+          <th>高速代</th>
+          <th>駐車代</th>
+          <th>税込利益</th>
+          <th>税抜利益</th>
+          <th>言語指定</th>
+          <th>支払上限額</th>
+          <th>立替料金</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>2026-05-19</td>
+          <td>終わり</td>
+          <td>06:30</td>
+          <td>ジップトリップ</td>
+          <td>空港送迎</td>
+          <td class="number">65,000</td>
+          <td class="number editable">0</td>
+          <td class="number editable">0</td>
+          <td class="number editable">0</td>
+          <td class="number">65,000</td>
+          <td class="number editable">4,070</td>
+          <td class="number editable">0</td>
+          <td class="number">60,930</td>
+          <td class="number">55,391</td>
+          <td class="number editable">0</td>
+          <td class="number">26,809</td>
+          <td class="number editable">0</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- Bottom Actions -->
+<div style="padding:16px 32px;background:#fff;border-top:1px solid #e8e4de;display:flex;gap:12px;justify-content:flex-end;">
+  <button class="btn btn-primary">保存</button>
+  <button class="btn btn-outline">キャンセル</button>
+</div>
+
+</body>
+</html>
